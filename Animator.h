@@ -31,30 +31,49 @@ public:
     /// アニメーションのアタッチ
     /// </summary>
     /// <param name="modelHandle">モデルのハンドル</param>
-    /// <param name="charaAnime">charaAnimeの列挙値</param>
-    void SetAnime(const int &modelHandle, const T &animeNum, const bool &isLoop)
+    /// <param name="anime">animation enum</param>
+    /// <param name="isLoop">ループ指定</param>
+    void SetAnime(const int &modelHandle, const T &anime, const bool &isLoop)
     {
         //現在再生中のアニメーションを指定されても再設定しない
-        if (animeNum == attachAnime) return;
+        if (anime == attachAnime) return;
 
-        int anim = static_cast<int>(animeNum);
+        int anim = static_cast<int>(anime);
 
         MV1DetachAnim(modelHandle, attachAnimeIndex);
 
         attachAnimeIndex = MV1AttachAnim(modelHandle, anim, -1, FALSE);
-        attachAnime = animeNum;
+        attachAnime = anime;
         animeStopTime = MV1GetAttachAnimTotalTime(modelHandle, attachAnimeIndex);
         animeTimer = 0.0f;
         isLoopAnime = isLoop;
     }
 
     /// <summary>
-    /// 全アニメーションの削除
+    /// アニメーションの削除
     /// </summary>
     /// <param name="modelHandle">モデルのハンドル</param>
     void RemoveAnime(const int &modelHandle)
     {
         if (attachAnimeIndex == -1) return;
+
+        MV1DetachAnim(modelHandle, attachAnimeIndex);
+        attachAnime = static_cast<T>(-1);
+        attachAnimeIndex = -1;
+        animeStopTime = 0.0f;
+        animeTimer = 0.0f;
+        isLoopAnime = false;
+    }
+
+    /// <summary>
+    /// 指定されたアニメーションが再生中だったら削除
+    /// </summary>
+    /// <param name="modelHandle">モデルのハンドル</param>
+    /// <param name="anime">animation enum</param>
+    void RemoveAnime(const int &modelHandle, const T &anime)
+    {
+        if (attachAnimeIndex == -1) return;
+        if (anime != attachAnime) return;
 
         MV1DetachAnim(modelHandle, attachAnimeIndex);
         attachAnime = static_cast<T>(-1);
