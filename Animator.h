@@ -1,48 +1,110 @@
 //------------------------------------------------
-//		©ì‚ÌAnimatorƒ‰ƒCƒuƒ‰ƒŠ[
-//								2024/02/17 XV
+//		è‡ªä½œã®Animatorãƒ©ã‚¤ãƒ–ãƒ©ãƒªãƒ¼
+//								2024/02/17 æ›´æ–°
 //------------------------------------------------
+
+#include "Log.h"
 
 #pragma once
 
-template<typename T>    //”CˆÓ‚Ìanimation enum
+template<typename T>    //ä»»æ„ã®animation enum
 class Animator
 {
 public:
-    Animator();
-    ~Animator();
+    Animator()
+    {
+        Log::getInstance()->WriteLog("animator create now...");
+        attachAnime = static_cast<T>(-1);
+        attachAnimeIndex = -1;
+        animeStopTime = 0.0f;
+        animeTimer = 0.0f;
+        isLoopAnime = false;
+        Log::getInstance()->WriteLog("animator create completed!");
+    }
+
+    ~Animator()
+    {
+
+    }
 
     /// <summary>
-    /// ƒAƒjƒ[ƒVƒ‡ƒ“‚ÌƒAƒ^ƒbƒ`
+    /// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®ã‚¢ã‚¿ãƒƒãƒ
     /// </summary>
-    /// <param name="modelHandle">ƒ‚ƒfƒ‹‚Ìƒnƒ“ƒhƒ‹</param>
-    /// <param name="charaAnime">charaAnime‚Ì—ñ‹“’l</param>
-    void SetAnime(const int &, const T &);
+    /// <param name="modelHandle">ãƒ¢ãƒ‡ãƒ«ã®ãƒãƒ³ãƒ‰ãƒ«</param>
+    /// <param name="charaAnime">charaAnimeã®åˆ—æŒ™å€¤</param>
+    void SetAnime(const int &modelHandle, const T &animeNum, const bool &isLoop)
+    {
+        //ç¾åœ¨å†ç”Ÿä¸­ã®ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚’æŒ‡å®šã•ã‚Œã¦ã‚‚å†è¨­å®šã—ãªã„
+        if (animeNum == attachAnime) return;
+
+        int anim = static_cast<int>(animeNum);
+
+        MV1DetachAnim(modelHandle, attachAnimeIndex);
+
+        attachAnimeIndex = MV1AttachAnim(modelHandle, anim, -1, FALSE);
+        attachAnime = animeNum;
+        animeStopTime = MV1GetAttachAnimTotalTime(modelHandle, attachAnimeIndex);
+        animeTimer = 0.0f;
+        isLoopAnime = isLoop;
+    }
 
     /// <summary>
-    /// ‘SƒAƒjƒ[ƒVƒ‡ƒ“‚Ìíœ
+    /// å…¨ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®å‰Šé™¤
     /// </summary>
-    /// <param name="modelHandle">ƒ‚ƒfƒ‹‚Ìƒnƒ“ƒhƒ‹</param>
-    void RemoveAnime(const int &);
+    /// <param name="modelHandle">ãƒ¢ãƒ‡ãƒ«ã®ãƒãƒ³ãƒ‰ãƒ«</param>
+    void RemoveAnime(const int &modelHandle)
+    {
+        if (attachAnimeIndex == -1) return;
+
+        MV1DetachAnim(modelHandle, attachAnimeIndex);
+        attachAnime = static_cast<T>(-1);
+        attachAnimeIndex = -1;
+        animeStopTime = 0.0f;
+        animeTimer = 0.0f;
+        isLoopAnime = false;
+    }
 
     /// <summary>
-    /// ƒAƒjƒ[ƒVƒ‡ƒ“‚ÌÄ¶
+    /// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®å†ç”Ÿ
     /// </summary>
-    /// <param name="modelHandle">ƒ‚ƒfƒ‹‚Ìƒnƒ“ƒhƒ‹</param>
-    void PlayAnime(const int &);
+    /// <param name="modelHandle">ãƒ¢ãƒ‡ãƒ«ã®ãƒãƒ³ãƒ‰ãƒ«</param>
+    void PlayAnime(const int &modelHandle)
+    {
+        if (attachAnimeIndex == -1) return;
+
+        if (animeStopTime <= animeTimer)
+        {
+            if (isLoopAnime)
+            {   //ãƒ«ãƒ¼ãƒ—ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®å ´åˆ
+                animeTimer = 0.0f;
+            } else
+            {
+                RemoveAnime(modelHandle);
+            }
+        }
+
+        MV1SetAttachAnimTime(modelHandle, attachAnimeIndex, animeTimer);
+
+        animeTimer += 0.5f;
+    }
 
     const T getNowAnime() const { return attachAnime; };
 
-    const bool isEndAnimation() const { return animeStopTime <= animeTimer; }
+    const bool isEndAnimation(const T &anime) const
+    {
+        if (anime == attachAnime) return animeStopTime <= animeTimer;
+        else return false;
+    };
 
     const float getNowAnimeTimer() const { return animeTimer; };
     const float getNowAnimeStopTime() const { return animeStopTime; };
 
 private:
-    T attachAnime;          //Ä¶’†‚ÌƒAƒjƒ[ƒVƒ‡ƒ“–¼
-    int attachAnimeIndex;   //ƒAƒjƒ[ƒVƒ‡ƒ“‚ÌƒAƒ^ƒbƒ`‚³‚ê‚½”Ô†A-1ˆÈŠO‚ª“ü‚Á‚Ä‚¢‚é‚ÍƒAƒjƒ[ƒVƒ‡ƒ“‚ª‚ ‚é
-    float animeTimer;       //ƒAƒjƒ[ƒVƒ‡ƒ“‚Ìƒ^ƒCƒ}[
-    float animeStopTime;    //ƒAƒjƒ[ƒVƒ‡ƒ“‚ÌI—¹ƒ^ƒCƒ}[
-    bool isPlayable;        //ƒAƒjƒ[ƒVƒ‡ƒ“‚ªÄ¶‰Â”\‚©”Û‚©
-    bool isLoopAnime;       //ƒ‹[ƒv‚·‚éƒAƒjƒ[ƒVƒ‡ƒ“‚©”Û‚©
+    T attachAnime;          //å†ç”Ÿä¸­ã®ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³å
+    int attachAnimeIndex;   //ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®ã‚¢ã‚¿ãƒƒãƒã•ã‚ŒãŸç•ªå·ã€-1ä»¥å¤–ãŒå…¥ã£ã¦ã„ã‚‹æ™‚ã¯ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ãŒã‚ã‚‹
+    float animeTimer;       //ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®ã‚¿ã‚¤ãƒãƒ¼
+    float animeStopTime;    //ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®çµ‚äº†ã‚¿ã‚¤ãƒãƒ¼
+    bool isPlayable;        //ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ãŒå†ç”Ÿå¯èƒ½ã‹å¦ã‹
+    bool isLoopAnime;       //ãƒ«ãƒ¼ãƒ—ã™ã‚‹ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‹å¦ã‹
+
 };
