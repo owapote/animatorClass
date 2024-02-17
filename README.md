@@ -1,0 +1,2 @@
+# animatorClass
+フィードバックを参考に、CharaAnimationクラスに変更を加えましたので、ご覧いただければ幸いです
