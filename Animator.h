@@ -104,7 +104,6 @@ private:
     int attachAnimeIndex;   //アニメーションのアタッチされた番号、-1以外が入っている時はアニメーションがある
     float animeTimer;       //アニメーションのタイマー
     float animeStopTime;    //アニメーションの終了タイマー
-    bool isPlayable;        //アニメーションが再生可能か否か
     bool isLoopAnime;       //ループするアニメーションか否か
 
 };
